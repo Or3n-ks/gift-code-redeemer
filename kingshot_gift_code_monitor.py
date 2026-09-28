@@ -31,7 +31,7 @@ from typing import Iterator, Sequence
 
 DEFAULT_URL = "https://kingshot.net/gift-codes"
 DEFAULT_USER_AGENT = "Kingshot-Gift-Code-Monitor/1.0"
-DEFAULT_WEBEX_WEBHOOK = "https://webexapis.com/v1/webhooks/incoming/Y2lzY29zcGFyazovL3VzL1dFQkhPT0svMWE3MTFkMDktMWFmMC00MjIwLTllYzgtODk0ZTFmZGRiZWZh"
+DEFAULT_WEBEX_WEBHOOK = "https://webexapis.com/v1/webhooks/incoming/xxxxxxxxxxxxxxxx"
 CODE_PATTERN = re.compile(r"[A-Z0-9][A-Z0-9_-]{5,31}\Z")
 
 
