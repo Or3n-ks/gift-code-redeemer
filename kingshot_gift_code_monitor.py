@@ -2,7 +2,7 @@
 """Monitor kingshot.net for newly published gift codes.
 
 The monitor is intentionally one-shot: schedule this script with cron or
-launchd.  The future claim script is called once per new code as:
+launchd. The optional claim script is called once per new code as:
 
     python redeem_gift_code.py players.csv --code CODE
 
@@ -31,7 +31,6 @@ from typing import Iterator, Sequence
 
 DEFAULT_URL = "https://kingshot.net/gift-codes"
 DEFAULT_USER_AGENT = "Kingshot-Gift-Code-Monitor/1.0"
-DEFAULT_WEBEX_WEBHOOK = "https://webexapis.com/v1/webhooks/incoming/xxxxxxxxxxxxxxxx"
 CODE_PATTERN = re.compile(r"[A-Z0-9][A-Z0-9_-]{5,31}\Z")
 
 
@@ -231,7 +230,10 @@ def run(args: argparse.Namespace) -> int:
             )
             if not players_file.is_file():
                 raise RuntimeError(f"Players CSV does not exist: {players_file}")
-        send_webex_update(args.webex_webhook, new_codes, checked_at, args.timeout)
+        if args.webex_webhook:
+            send_webex_update(args.webex_webhook, new_codes, checked_at, args.timeout)
+        else:
+            print("Webex notification skipped: set WEBEX_WEBHOOK_URL to enable it.")
         if claim_script:
             for code in new_codes:
                 try:
@@ -240,8 +242,8 @@ def run(args: argparse.Namespace) -> int:
                     raise RuntimeError(f"Could not launch claim script for {code}: {exc}") from exc
                 results.append(result)
 
-        # Webex notification succeeded, so these codes should not generate a
-        # duplicate notification on the next hourly run. Claiming is optional.
+        # Record processed codes after any configured notification succeeds.
+        # Claiming and Webex notifications are both optional.
         save_state(state_path, current)
 
         return 0 if all(result.returncode == 0 for result in results) else 1
@@ -254,7 +256,8 @@ def build_parser() -> argparse.ArgumentParser:
         "--players-file",
         help="Player CSV passed to the claim script; defaults to players.csv beside that script",
     )
-    parser.add_argument("--webex-webhook", default=DEFAULT_WEBEX_WEBHOOK, help="Webex incoming-webhook URL")
+    parser.add_argument("--webex-webhook", default=os.environ.get("WEBEX_WEBHOOK_URL", "").strip(),
+                        help="Webex incoming-webhook URL (defaults to WEBEX_WEBHOOK_URL)")
     parser.add_argument("--state-file", default="kingshot_gift_codes.json", help="JSON state file path")
     parser.add_argument("--lock-file", help="Lock-file path; defaults beside --state-file")
     parser.add_argument("--url", default=DEFAULT_URL, help="Gift-code page URL")

@@ -1,1 +1,2 @@
-playwright
+# Python 3.10+; only the Python standard library is used.
+# No third-party packages or browser installation are required.
